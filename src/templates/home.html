@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 
+{% block title %}
+{{title}}
+{% endblock title %}
+
 {% block content %}
-This is a home page.
+<h1>This is a home page.</h1>
+{% include "snippets/welcome-user-msg.html" %}
+<p>{{request.user}}<p>
 {% endblock content %}
