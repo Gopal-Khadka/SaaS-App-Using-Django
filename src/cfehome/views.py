@@ -7,3 +7,4 @@ def home_page_view(request):
     my_context = {"title": "Home", "count": queryset.count}
     PageVisits.objects.create(path=request.path)
     return render(request, "home.html", context=my_context)
+
