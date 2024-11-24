@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     # my apps
     "visits",
     "commando",
+    "user_auth"
 ]
 
 MIDDLEWARE = [
