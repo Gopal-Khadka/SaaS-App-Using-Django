@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "allauth.socialaccount.providers.github",
     "widget_tweaks",
     "slippers",
 ]
@@ -200,11 +201,13 @@ ACCOUNT_AUTHENTICATION_METHOD = "username_email"
 
 # Provider specific settings
 SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        # For each OAuth based provider, either add a ``SocialApp``
-        # (``socialaccount`` app) containing the required client
-        # credentials, or list them here:
-        "APP": {"client_id": "123", "secret": "456", "key": ""}
+    "github": {
+        # "SCOPE": [
+        #     "user",
+        #     "repo",
+        #     "read:org",
+        # ],
+        "VERIFIED_EMAIL": True,
     }
 }
 
