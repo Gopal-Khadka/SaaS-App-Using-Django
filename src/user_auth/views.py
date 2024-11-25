@@ -1,8 +1,8 @@
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect
 
-
+User = get_user_model()
 def login_view(request):
     if request.method == "POST":
         username = request.POST["username"]
@@ -20,10 +20,12 @@ def signup_view(request):
         username = request.POST["username"]
         password1 = request.POST["password1"]
         password2 = request.POST["password2"]
+        # validation
+        # username_exists_qs = User.objects.filter(username__iexact=username).exists()
+        # if username_exists_qs:
+        #     print("Username already exists")
         if password1==password2:
-            user = User.objects.create(username=username)
-            user.set_password(password1)
-            user.save()
+            user = User.objects.create_user(username=username,password=password1)
             if user is not None:
                 login(request, user)
                 print("You are signed in")
