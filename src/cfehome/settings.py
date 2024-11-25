@@ -69,9 +69,12 @@ INSTALLED_APPS = [
     "commando",
     "user_auth",
     # third party apps
+    "allauth_ui",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "widget_tweaks",
+    "slippers",
 ]
 
 MIDDLEWARE = [
@@ -204,3 +207,6 @@ SOCIALACCOUNT_PROVIDERS = {
         "APP": {"client_id": "123", "secret": "456", "key": ""}
     }
 }
+
+# Allauth ui config
+ALLAUTH_UI_THEME = "light"
