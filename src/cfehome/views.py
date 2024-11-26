@@ -1,9 +1,14 @@
-from django.shortcuts import render
+from django.shortcuts import render,HttpResponse
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from visits.models import PageVisits
+
+LOGIN_URL = settings.LOGIN_URL
 
 
 def home_page_view(request):
+    print(LOGIN_URL)
     queryset = PageVisits.objects.filter(path=request.path)
     my_context = {"title": "Home", "count": queryset.count}
     PageVisits.objects.create(path=request.path)
@@ -29,3 +34,10 @@ def secret_view(request):
 @login_required
 def users_only_view(request, *args, **kwargs):
     return render(request, "protected/user-only.html")
+
+def blank_page():
+    return HttpResponse("You are not staff")
+
+@staff_member_required(login_url=LOGIN_URL)
+def staff_only_view(request, *args, **kwargs):
+    return render(request, "protected/staff-only.html")
