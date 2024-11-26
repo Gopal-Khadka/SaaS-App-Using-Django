@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}
+Protected View
+{% endblock title %}
+
+{% block content %}
+<h1>This is a secret page.</h1>
+
+<p>{{request.user}}<p>
+<br/>
+{% endblock content %}

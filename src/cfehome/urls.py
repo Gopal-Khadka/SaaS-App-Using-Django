@@ -17,7 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-from .views import home_page_view
+from .views import home_page_view, secret_view
 from user_auth import views as auth_views
 
 urlpatterns = [
@@ -26,5 +26,5 @@ urlpatterns = [
     path("login/", auth_views.login_view, name="login"),
     path("signup/", auth_views.signup_view, name="signup"),
     path("admin/", admin.site.urls),
-    # path("visits/", include("visits.urls")),
+    path("protected/", secret_view),
 ]

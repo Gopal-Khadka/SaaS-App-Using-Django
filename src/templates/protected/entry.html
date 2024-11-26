@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}
+Unprotected View
+{% endblock title %}
+
+{% block content %}
+<h1>This is a entry page to secrets.</h1>
+<form method="POST">
+{% csrf_token %}
+<label>Enter your code: </label> <br>
+<input type="text" name="code"/>
+<button type="submit">Submit</button>
+</form>
+<br/>
+{% endblock content %}
