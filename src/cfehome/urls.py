@@ -7,6 +7,7 @@ from user_auth import views as auth_views
 urlpatterns = [
     path("", home_page_view, name="home"),
     path("accounts/", include("allauth.urls")),
+    path("profiles/", include("profiles.urls")),
     path("login/", auth_views.login_view, name="login"),
     path("signup/", auth_views.signup_view, name="signup"),
     path("admin/", admin.site.urls),

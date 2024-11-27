@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import get_user_model
 from django.shortcuts import render, redirect
+from django.views import View
 
 User = get_user_model()
 def login_view(request):
@@ -12,7 +13,7 @@ def login_view(request):
             login(request, user)
             print("You are logged in")
             return redirect("/")
-    return render(request, "auth/login.html", {})
+    return render(request, "user_auth/login.html", {})
 
 
 def signup_view(request):
@@ -30,4 +31,4 @@ def signup_view(request):
                 login(request, user)
                 print("You are signed in")
                 return redirect("/")
-    return render(request,"auth/signup.html",{})
+    return render(request,"user_auth/signup.html",{})
