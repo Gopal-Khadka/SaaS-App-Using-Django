@@ -14,6 +14,11 @@ def profile_list_view(request):
 @login_required
 def profile_detail_view(request, username=None, *args, **kwargs):
     user = request.user
+    print(
+        user.has_perm("subscriptions.basic"),
+        user.has_perm("subscriptions.pro"),
+        user.has_perm("subscriptions.advanced"),
+    )
     profile_user_obj = get_object_or_404(User, username=username)
     context = {
         "object": profile_user_obj,
