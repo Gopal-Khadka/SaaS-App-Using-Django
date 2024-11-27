@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}
+Profile List
+{% endblock title %}
+
+{% block content %}
+
+<h1>This is a profile list view page.</h1>
+
+{% if perms.auth.view_user %}
+    {% for instance in object_list %}
+        <p><a href="/profiles/{{instance.username}}">{{instance.username}}</a></p>
+    {% endfor %}
+{% else %}
+<p> You are not allowed to view the list</p>
+{% endif %}
+
+{% endblock content %}

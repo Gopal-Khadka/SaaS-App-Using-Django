@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}
+Profile List
+{% endblock title %}
+
+{% block content %}
+
+<h1>This is a profile detail view page.</h1>
+
+{% if perms.auth.view_user or owner %}
+    <p>{{object.username}}</p>
+    <p>{{object.first_name}}</p>
+    <p>{{object.last_login}}</p>
+{% else %}
+<p> You are not allowed to view the detail of {{object.username}}</p>
+{% endif %}
+
+{% endblock content %}
