@@ -8,11 +8,8 @@ if "sk_test" in STRIPE_API_KEY and not DJANGO_DEBUG:
     raise ValueError("Invalid stripe key for production purposes")
 
 
-def create_customer(name="", email="", raw=False):
-    response = stripe.Customer.create(
-        name=name,
-        email=email,
-    )
+def create_customer(name="", email="", metadata={}, raw=False):
+    response = stripe.Customer.create(name=name, email=email, metadata=metadata)
     if raw:
         return response
     stripe_id = response.id
