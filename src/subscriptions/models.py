@@ -70,6 +70,12 @@ class SubscriptionPrice(models.Model):
         max_length=120, default=IntervalChoices.MONTHLY, choices=IntervalChoices.choices
     )
     price = models.DecimalField(max_digits=10, decimal_places=2, default=99.99)
+    order = models.IntegerField(default=-1, help_text="Ordering on Django Pricing Page")
+    featured = models.BooleanField(
+        default=True, help_text="Featured on Django pricing page"
+    )
+    updated = models.DateTimeField(auto_now=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     @property
     def product_stripe_id(self):
@@ -97,9 +103,20 @@ class SubscriptionPrice(models.Model):
             )
             self.stripe_id = stripe_id
         super().save(*args, **kwargs)
+        # only one price for both monthly and annually must be valid
+        # other prices must be inactive(non-featured)
+        if self.featured and self.subscription:
+            qs = SubscriptionPrice.objects.filter(
+                subscription=self.subscription, interval=self.interval
+            ).exclude(id=self.id)
+            # make other prices in same interval(monthly or yearly) and same subscription plan "false"
+            qs.update(featured=False)
 
     def __str__(self) -> str:
         return self.product_stripe_id
+
+    class Meta:
+        ordering = ["order", "featured", "-updated"]
 
 
 class UserSubscription(models.Model):
