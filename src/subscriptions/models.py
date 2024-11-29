@@ -53,6 +53,55 @@ class Subscriptions(models.Model):
         return self.name
 
 
+class SubscriptionPrice(models.Model):
+    """
+    Subscription Price = Stripe Price
+    """
+
+    class IntervalChoices(models.TextChoices):
+        MONTHLY = "month", "Monthly"
+        YEARLY = "year", "Yearly"
+
+    subscription = models.ForeignKey(
+        Subscriptions, on_delete=models.SET_NULL, null=True
+    )
+    stripe_id = models.CharField(max_length=120, null=True, blank=True)
+    interval = models.CharField(
+        max_length=120, default=IntervalChoices.MONTHLY, choices=IntervalChoices.choices
+    )
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=99.99)
+
+    @property
+    def product_stripe_id(self):
+        if not self.subscription:
+            return None
+        return self.subscription.id
+
+    @property
+    def stripe_price(self):
+        """Remove decimal places for the price"""
+        return self.price * 100
+
+    @property
+    def stripe_currency(self):
+        return "usd"
+
+    def save(self, *args, **kwargs):
+        if self.product_stripe_id is not None and not self.stripe_id:
+            stripe_id = helpers.billing.create_price(
+                unit_amount=self.stripe_price,
+                product=self.product_stripe_id,
+                interval=self.interval,
+                currency=self.stripe_currency,
+                metadata={"subscription_plan_price_id": self.pk},
+            )
+            self.stripe_id = stripe_id
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return self.product_stripe_id
+
+
 class UserSubscription(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     subscription = models.ForeignKey(
