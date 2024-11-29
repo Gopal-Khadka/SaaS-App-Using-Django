@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "user_auth",
     "profiles",
     "subscriptions",
+    "customers",
     # third party apps
     "allauth_ui",
     "allauth",
