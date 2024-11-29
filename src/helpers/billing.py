@@ -38,7 +38,7 @@ def create_price(
         currency=currency,
         unit_amount=unit_amount,
         product=product,
-        interval=interval,
+        recurring={"interval": interval},
         metadata=metadata,
     )
 

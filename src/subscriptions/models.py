@@ -75,12 +75,12 @@ class SubscriptionPrice(models.Model):
     def product_stripe_id(self):
         if not self.subscription:
             return None
-        return self.subscription.id
+        return self.subscription.stripe_id
 
     @property
     def stripe_price(self):
         """Remove decimal places for the price"""
-        return self.price * 100
+        return int(self.price * 100)
 
     @property
     def stripe_currency(self):
