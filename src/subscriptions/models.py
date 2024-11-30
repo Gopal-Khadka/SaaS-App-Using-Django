@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import Group, Permission
 from django.db.models.signals import post_save
 from django.conf import settings
+from django.urls import reverse
 
 User = settings.AUTH_USER_MODEL
 ALLOW_CUSTOM_GROUPS = True
@@ -101,6 +102,10 @@ class SubscriptionPrice(models.Model):
         if not self.subscription:
             return []
         return self.subscription.get_features_list
+
+    @property
+    def get_checkout_url(self):
+        return reverse("sub-price-checkout", kwargs={"price_id": self.id})
 
     @property
     def display_sub_name(self):
