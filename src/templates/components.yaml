@@ -1,2 +1,3 @@
 components:
   navbar: "nav/navbar.html"
+  pricing_card: "subscriptions/snippets/pricing_card.html"

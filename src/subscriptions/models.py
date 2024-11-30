@@ -23,6 +23,7 @@ class Subscriptions(models.Model):
     """
 
     name = models.CharField(max_length=120, blank=True)
+    subtitle = models.TextField(null=True, blank=True)
     active = models.BooleanField(default=True)
     groups = models.ManyToManyField(Group)
     permissions = models.ManyToManyField(
@@ -40,6 +41,17 @@ class Subscriptions(models.Model):
     )
     updated = models.DateTimeField(auto_now=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+    features = models.TextField(
+        help_text="Features for plan pricing separated by newline",
+        blank=True,
+        null=True,
+    )
+
+    @property
+    def get_features_list(self):
+        if not self.features:
+            return []
+        return [x.strip() for x in self.features.splitlines()]
 
     def save(self, *args, **kwargs):
         if not self.stripe_id:
@@ -83,6 +95,24 @@ class SubscriptionPrice(models.Model):
     )
     updated = models.DateTimeField(auto_now=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def display_features_list(self):
+        if not self.subscription:
+            return []
+        return self.subscription.get_features_list
+
+    @property
+    def display_sub_name(self):
+        if not self.subscription:
+            return "Plan"
+        return self.subscription.name.title()
+
+    @property
+    def display_sub_subtitle(self):
+        if not self.subscription:
+            return ""
+        return self.subscription.subtitle
 
     @property
     def product_stripe_id(self):
