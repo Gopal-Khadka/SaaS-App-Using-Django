@@ -1,8 +1,12 @@
 import helpers.billing
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.http import HttpResponseBadRequest
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from subscriptions.models import SubscriptionPrice
+from subscriptions.models import SubscriptionPrice, Subscriptions, UserSubscription
+
+User = get_user_model()
 
 
 def product_price_redirect_view(request, price_id=None, *args, **kwargs):
@@ -38,11 +42,42 @@ def checkout_redirect_view(request):
 
 def checkout_finalized_view(request):
     session_id = request.GET.get("session_id")
-    checkout_r = helpers.billing.get_checkout_session(session_id, raw=True)
-    sub_id = checkout_r.subscription
-    sub_r = helpers.billing.get_subscription(sub_id, raw=True)
+    customer_id, plan_id = helpers.billing.get_checkout_customer_plan(session_id)
+
+    try:
+        sub_obj = Subscriptions.objects.get(subscriptionprice__stripe_id=plan_id)
+    except:
+        sub_obj = None
+
+    try:
+        user_obj = User.objects.get(customer__stripe_id=customer_id)
+    except:
+        user_obj = None
+
+    user_sub_exists = False
+    try:
+        user_sub_obj = UserSubscription.objects.get(user=user_obj)
+        user_sub_exists = True
+
+    except UserSubscription.DoesNotExist:
+        user_sub_obj = UserSubscription.objects.create(
+            user=user_obj, subscription=sub_obj
+        )
+    except:
+        user_sub_obj = None
+
+    if None in [sub_obj, user_obj, user_sub_obj]:
+        return HttpResponseBadRequest(
+            "There was an error with your account, please contact us."
+        )
+    
+    if user_sub_exists:
+        user_sub_obj.subscription = sub_obj
+        user_sub_obj.save()
+
+    print(user_sub_obj)
     return render(
         request,
         "checkouts/success.html",
-        {"subscription": sub_r, "checkout": checkout_r},
+        {"obj": user_sub_obj},
     )

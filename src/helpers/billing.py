@@ -82,3 +82,14 @@ def get_subscription(subscription_id, raw=False):
     if raw:
         return response
     return response.id
+
+
+def get_checkout_customer_plan(session_id=""):
+    checkout_r = get_checkout_session(session_id, raw=True)
+    customer_id = checkout_r.customer
+
+    sub_stripe_id = checkout_r.subscription
+    sub_r = get_subscription(sub_stripe_id, raw=True)
+    sub_plan = sub_r.plan
+
+    return customer_id, sub_plan.id
