@@ -41,8 +41,32 @@ def checkout_redirect_view(request):
 
 
 def checkout_finalized_view(request):
+    """
+    Handles the checkout success process after a Stripe session is completed.
+
+    This view retrieves the checkout session details using the session ID from the request,
+    extracts customer and subscription information, and updates the user's subscription
+    in the database. If the user already has a subscription, the previous one is canceled
+    and updated with the new plan.
+
+    Args:
+        request (HttpRequest): The HTTP request object containing the session ID.
+
+    Returns:
+        HttpResponse: Renders the success page with the updated user subscription details.
+
+    Raises:
+        HttpResponseBadRequest: If there is an issue with retrieving the subscription or user information.
+    """
     session_id = request.GET.get("session_id")
-    customer_id, plan_id = helpers.billing.get_checkout_customer_plan(session_id)
+    checkout_data = helpers.billing.get_checkout_customer_plan(session_id)
+
+    # unpack the checkout data
+    customer_id = checkout_data.get("customer_id")
+    plan_id = checkout_data.get("sub_plan_id")
+    sub_stripe_id = checkout_data.get("sub_stripe_id")
+    current_period_start = checkout_data.get("current_period_start")
+    current_period_end = checkout_data.get("current_period_end")
 
     try:
         sub_obj = Subscriptions.objects.get(subscriptionprice__stripe_id=plan_id)
@@ -55,13 +79,20 @@ def checkout_finalized_view(request):
         user_obj = None
 
     user_sub_exists = False
+    updated_sub_options = {
+        "subscription": sub_obj,
+        "stripe_id": sub_stripe_id,
+        "user_cancelled": False,
+        "current_period_start": current_period_start,
+        "current_period_end": current_period_end,
+    }
     try:
         user_sub_obj = UserSubscription.objects.get(user=user_obj)
         user_sub_exists = True
 
     except UserSubscription.DoesNotExist:
         user_sub_obj = UserSubscription.objects.create(
-            user=user_obj, subscription=sub_obj
+            user=user_obj, **updated_sub_options
         )
     except:
         user_sub_obj = None
@@ -70,12 +101,23 @@ def checkout_finalized_view(request):
         return HttpResponseBadRequest(
             "There was an error with your account, please contact us."
         )
-    
+
     if user_sub_exists:
-        user_sub_obj.subscription = sub_obj
+        # cancel the old subscription
+        old_sub_stripe_id = user_sub_obj.stripe_id
+        # check if the new plan is similar to current plan
+        same_stripe_id = user_sub_obj.stripe_id == old_sub_stripe_id
+
+        if old_sub_stripe_id is not None and not same_stripe_id:
+            cancel_id = helpers.billing.cancel_subscription(
+                subscription_id=old_sub_stripe_id,
+                reason="Auto ended new membership",
+            )
+        # assign new subscriptions
+        for k, v in updated_sub_options.items():
+            setattr(user_sub_obj, k, v)
         user_sub_obj.save()
 
-    print(user_sub_obj)
     return render(
         request,
         "checkouts/success.html",

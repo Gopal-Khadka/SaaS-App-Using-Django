@@ -1,3 +1,4 @@
+from typing import Iterable
 import helpers.billing
 from django.db import models
 from django.contrib.auth.models import Group, Permission
@@ -166,11 +167,34 @@ class UserSubscription(models.Model):
     subscription = models.ForeignKey(
         Subscriptions, on_delete=models.SET_NULL, null=True, blank=True
     )
+    stripe_id = models.CharField(max_length=120, null=True, blank=True)
     active = models.BooleanField(default=True)
+    user_cancelled = models.BooleanField(default=False)
+    original_period_start = models.DateTimeField(
+        auto_now=False, auto_now_add=False, blank=True, null=True
+    )  # track when the user initially subscribed
+    current_period_start = models.DateTimeField(
+        auto_now=False, auto_now_add=False, blank=True, null=True
+    )
+    current_period_end = models.DateTimeField(
+        auto_now=False, auto_now_add=False, blank=True, null=True
+    )
+
+    def save(self, *args, **kwargs):
+        if self.original_period_start is None and self.current_period_start is not None:
+            self.original_period_start = self.current_period_start
+        return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        subscription_name = self.subscription.name if self.subscription else "None"
-        return self.user.username + " - " + subscription_name
+        subscription_data = " - "
+        if self.subscription:
+            price = self.subscription.subscriptionprice_set.filter(
+                featured=True
+            ).first()
+            if price:
+                subscription_data += f"{self.subscription.name} ({price.interval})"
+
+        return self.user.username + subscription_data
 
 
 def user_sub_post_save(sender, instance, *args, **kwargs):
