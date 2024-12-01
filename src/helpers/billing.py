@@ -46,3 +46,25 @@ def create_price(
         return response
     stripe_id = response.id
     return stripe_id
+
+
+def start_checkout_session(
+    success_url="",
+    cancel_url="",
+    price_stripe_id="",
+    customer_id="",
+    raw=False,
+):
+    if not success_url.endswith("?session_id={CHECKOUT_SESSION_ID}"):
+        success_url = f"{success_url}" + "?session_id={CHECKOUT_SESSION_ID}"
+    response = stripe.checkout.Session.create(
+        success_url=success_url,
+        cancel_url=cancel_url,
+        customer=customer_id,
+        line_items=[{"price": price_stripe_id, "quantity": 1}],
+        mode="subscription",
+    )
+
+    if raw:
+        return response
+    return response.url
