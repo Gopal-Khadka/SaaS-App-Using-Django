@@ -68,3 +68,17 @@ def start_checkout_session(
     if raw:
         return response
     return response.url
+
+
+def get_checkout_session(session_id, raw=False):
+    response = stripe.checkout.Session.retrieve(id=session_id)
+    if raw:
+        return response
+    return response.id
+
+
+def get_subscription(subscription_id, raw=False):
+    response = stripe.Subscription.retrieve(id=subscription_id)
+    if raw:
+        return response
+    return response.id
