@@ -195,6 +195,23 @@ class UserSubscription(models.Model):
         choices=SubscriptionStatus.choices,
     )
 
+    def serialize(self):
+        """Return dict of current period start, end and the status of the subscription."""
+        return {
+            "current_period_start": self.current_period_start,
+            "current_period_end": self.current_period_end,
+            "status": self.status,
+            "plan_name": self.plan_name,
+        }
+
+    @property
+    def plan_name(self):
+        return self.subscription.name if self.subscription else None
+
+    def get_absolute_url(self):
+        """Returns the url for account billing (user subscription) view"""
+        return reverse("user_subscription")
+
     def save(self, *args, **kwargs):
         if self.original_period_start is None and self.current_period_start is not None:
             self.original_period_start = self.current_period_start

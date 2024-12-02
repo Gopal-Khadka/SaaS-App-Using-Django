@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}
+User Subscription View 
+{% endblock title %}
+
+{% block content %}
+this is user subscription detail view
+<form method="POST">
+{% csrf_token %}
+<button type="submit" class="text-white bg-blue-500 p-2 rounded">Refresh Sub</button>
+</form>
+
+
+
+<h2>Subscription data</h2>
+<p>Name: {{subscription.plan_name}} Plan</p>
+<p>Membership Age: {{subscription.original_period_start|timesince}} ({{subscription.original_period_start}})</p>
+<p>Start: {{subscription.current_period_start}}</p>
+<p>Status: {{subscription.status|title}}</p>
+<p>End: {{subscription.current_period_end}}</p>
+<p>Left time: {{subscription.current_period_end|timeuntil}}</p>
+
+{% endblock content%}

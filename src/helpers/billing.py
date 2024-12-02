@@ -10,6 +10,29 @@ if "sk_test" in STRIPE_API_KEY and not DJANGO_DEBUG:
     raise ValueError("Invalid stripe key for production purposes")
 
 
+def serialize_subscription_data(sub_r):
+    """
+    Takes subscription response and serialize the values into dict.
+
+    Returns:
+        dict: A dictionary containing the following subscription data:
+            - "current_period_start" (datetime): The start datetime of the current subscription period.
+            - "current_period_end" (datetime): The end datetime of the current subscription period.
+            - "status" (str): Status of the current subscription i.e active, expired, trailing,...
+
+    """
+    status = sub_r.status
+    # convert timestamps into datetime for storing in model
+    current_period_start = date_utils.timestamp_as_datetime(sub_r.current_period_start)
+    current_period_end = date_utils.timestamp_as_datetime(sub_r.current_period_end)
+
+    return {
+        "current_period_start": current_period_start,
+        "current_period_end": current_period_end,
+        "status": status,
+    }
+
+
 def create_customer(name="", email="", metadata={}, raw=False):
     response = stripe.Customer.create(name=name, email=email, metadata=metadata)
     if raw:
@@ -83,7 +106,7 @@ def get_subscription(subscription_id, raw=False):
     response = stripe.Subscription.retrieve(id=subscription_id)
     if raw:
         return response
-    return response.id
+    return serialize_subscription_data(response)
 
 
 def cancel_subscription(subscription_id, reason="", feedback="other", raw=False):
@@ -97,29 +120,6 @@ def cancel_subscription(subscription_id, reason="", feedback="other", raw=False)
     if raw:
         return response
     return response.id
-
-
-def serialize_subscription_data(sub_r):
-    """
-    Takes subscription response and serialize the values into dict.
-
-    Returns:
-        dict: A dictionary containing the following subscription data:
-            - "current_period_start" (datetime): The start datetime of the current subscription period.
-            - "current_period_end" (datetime): The end datetime of the current subscription period.
-            - "status" (str): Status of the current subscription i.e active, expired, trailing,...
-
-    """
-    status = sub_r.status
-    # convert timestamps into datetime for storing in model
-    current_period_start = date_utils.timestamp_as_datetime(sub_r.current_period_start)
-    current_period_end = date_utils.timestamp_as_datetime(sub_r.current_period_end)
-
-    return {
-        "current_period_start": current_period_start,
-        "current_period_end": current_period_end,
-        "status": status,
-    }
 
 
 def get_checkout_customer_plan(session_id=""):

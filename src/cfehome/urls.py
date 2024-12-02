@@ -7,9 +7,12 @@ from checkouts import views as checkout_views
 
 urlpatterns = [
     path("", home_page_view, name="home"),
-    path("accounts/", include("allauth.urls")),
     path("profiles/", include("profiles.urls")),
     path("admin/", admin.site.urls),
+    path(
+        "accounts/billing", subs_views.user_subscription_view, name="user_subscription"
+    ),
+    path("accounts/", include("allauth.urls")),
     path("pricing/<str:interval>", subs_views.subscription_price_view, name="pricing"),
     path(
         "checkout/sub-price/<int:price_id>",
