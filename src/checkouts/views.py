@@ -62,11 +62,10 @@ def checkout_finalized_view(request):
     checkout_data = helpers.billing.get_checkout_customer_plan(session_id)
 
     # unpack the checkout data
-    customer_id = checkout_data.get("customer_id")
-    plan_id = checkout_data.get("sub_plan_id")
-    sub_stripe_id = checkout_data.get("sub_stripe_id")
-    current_period_start = checkout_data.get("current_period_start")
-    current_period_end = checkout_data.get("current_period_end")
+    customer_id = checkout_data.pop("customer_id")
+    plan_id = checkout_data.pop("sub_plan_id")
+    sub_stripe_id = checkout_data.pop("sub_stripe_id")
+    subscription_data = {**checkout_data}
 
     try:
         sub_obj = Subscriptions.objects.get(subscriptionprice__stripe_id=plan_id)
@@ -83,8 +82,7 @@ def checkout_finalized_view(request):
         "subscription": sub_obj,
         "stripe_id": sub_stripe_id,
         "user_cancelled": False,
-        "current_period_start": current_period_start,
-        "current_period_end": current_period_end,
+        **subscription_data,
     }
     try:
         user_sub_obj = UserSubscription.objects.get(user=user_obj)

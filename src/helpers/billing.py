@@ -99,6 +99,29 @@ def cancel_subscription(subscription_id, reason="", feedback="other", raw=False)
     return response.id
 
 
+def serialize_subscription_data(sub_r):
+    """
+    Takes subscription response and serialize the values into dict.
+
+    Returns:
+        dict: A dictionary containing the following subscription data:
+            - "current_period_start" (datetime): The start datetime of the current subscription period.
+            - "current_period_end" (datetime): The end datetime of the current subscription period.
+            - "status" (str): Status of the current subscription i.e active, expired, trailing,...
+
+    """
+    status = sub_r.status
+    # convert timestamps into datetime for storing in model
+    current_period_start = date_utils.timestamp_as_datetime(sub_r.current_period_start)
+    current_period_end = date_utils.timestamp_as_datetime(sub_r.current_period_end)
+
+    return {
+        "current_period_start": current_period_start,
+        "current_period_end": current_period_end,
+        "status": status,
+    }
+
+
 def get_checkout_customer_plan(session_id=""):
     """
     Retrieves the subscription details for a customer based on a Stripe Checkout session.
@@ -119,23 +142,25 @@ def get_checkout_customer_plan(session_id=""):
             - "sub_stripe_id" (str): The Stripe subscription ID.
             - "current_period_start" (datetime): The start datetime of the current subscription period.
             - "current_period_end" (datetime): The end datetime of the current subscription period.
+            - "status" (str): Status of the current subscription i.e active, expired, trailing,...
 
     Raises:
         stripe.error.StripeError: If any errors occur while communicating with the Stripe API, such as invalid
                                   session ID or subscription ID.
 
     Example:
-        result = get_checkout_customer_plan("cs_test_1234abcd")   
-        print(result)   
+        result = get_checkout_customer_plan("cs_test_1234abcd") <br>
+        print(result)   <br>
 
-         Output:   
-         {   
-            "customer_id": "cus_abc123xyz",   
-           "sub_plan_id": "plan_4567abcd",   
-           "sub_stripe_id": "sub_7890xyz",   
-           "current_period_start": datetime.datetime(2024, 11, 1, 10, 0, 0),   
-           "current_period_end": datetime.datetime(2025, 11, 1, 10, 0, 0),   
-         }   
+         Output:   <br>
+         {   <br>
+            "customer_id": "cus_abc123xyz",   <br>
+           "sub_plan_id": "plan_4567abcd",   <br>
+           "sub_stripe_id": "sub_7890xyz",   <br>
+           "current_period_start": datetime.datetime(2024, 11, 1, 10, 0, 0),   <br>
+           "current_period_end": datetime.datetime(2025, 11, 1, 10, 0, 0),   <br>
+           "status":"active"   <br>
+         }
     """
 
     checkout_r = get_checkout_session(session_id, raw=True)
@@ -145,16 +170,13 @@ def get_checkout_customer_plan(session_id=""):
     sub_r = get_subscription(sub_stripe_id, raw=True)
     sub_plan = sub_r.plan
 
-    # convert timestamps into datetime for storing in model
-    current_period_start = date_utils.timestamp_as_datetime(sub_r.current_period_start)
-    current_period_end = date_utils.timestamp_as_datetime(sub_r.current_period_end)
+    serialized_sub_data = serialize_subscription_data(sub_r)
 
     # collecting all related data
     data = {
         "customer_id": customer_id,
         "sub_plan_id": sub_plan.id,
         "sub_stripe_id": sub_stripe_id,
-        "current_period_start": current_period_start,
-        "current_period_end": current_period_end,
+        **serialized_sub_data,
     }
     return data

@@ -163,6 +163,16 @@ class SubscriptionPrice(models.Model):
 
 
 class UserSubscription(models.Model):
+    class SubscriptionStatus(models.TextChoices):
+        ACTIVE = "active", "Active"
+        TRAILING = "trailing", "Trailing"
+        INCOMPLETE = "incomplete", "Incomplete"
+        INCOMPLETE_EXPIRED = "incomplete_expired", "Incomplete Expired"
+        PAST_DUE = "past_due", "Past Due"
+        CANCELED = "canceled", "Canceled"
+        UNPAID = "unpaid", "Unpaid"
+        PAUSED = "paused", "Paused"
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     subscription = models.ForeignKey(
         Subscriptions, on_delete=models.SET_NULL, null=True, blank=True
@@ -178,6 +188,11 @@ class UserSubscription(models.Model):
     )
     current_period_end = models.DateTimeField(
         auto_now=False, auto_now_add=False, blank=True, null=True
+    )
+    status = models.CharField(
+        null=True,
+        blank=True,
+        choices=SubscriptionStatus.choices,
     )
 
     def save(self, *args, **kwargs):
