@@ -1,4 +1,5 @@
 import helpers.billing
+from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.http import HttpResponseBadRequest
@@ -115,6 +116,9 @@ def checkout_finalized_view(request):
         for k, v in updated_sub_options.items():
             setattr(user_sub_obj, k, v)
         user_sub_obj.save()
+        messages.success(request,"Success ! Thank you for joining us.")
+        return redirect(user_sub_obj.get_absolute_url())
+
 
     return render(
         request,

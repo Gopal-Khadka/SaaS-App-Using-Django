@@ -25,11 +25,13 @@ def serialize_subscription_data(sub_r):
     # convert timestamps into datetime for storing in model
     current_period_start = date_utils.timestamp_as_datetime(sub_r.current_period_start)
     current_period_end = date_utils.timestamp_as_datetime(sub_r.current_period_end)
+    cancel_at_period_end = sub_r.cancel_at_period_end
 
     return {
         "current_period_start": current_period_start,
         "current_period_end": current_period_end,
         "status": status,
+        "cancel_at_period_end": cancel_at_period_end,
     }
 
 
@@ -109,17 +111,25 @@ def get_subscription(subscription_id, raw=False):
     return serialize_subscription_data(response)
 
 
-def cancel_subscription(subscription_id, reason="", feedback="other", raw=False):
-    response = stripe.Subscription.cancel(
-        subscription_id,
-        cancellation_details={
-            "comment": reason,
-            "feedback": feedback,
-        },
-    )
+def cancel_subscription(
+    subscription_id, reason="", cancel_at_period_end=False, feedback="other", raw=False
+):
+
+    if cancel_at_period_end:
+        response = stripe.Subscription.modify(
+            subscription_id,
+            cancel_at_period_end=cancel_at_period_end,
+            cancellation_details={"comment": reason, "feedback": feedback},
+        )
+    else:
+        response = stripe.Subscription.cancel(
+            subscription_id,
+            cancellation_details={"comment": reason, "feedback": feedback},
+        )
+
     if raw:
         return response
-    return response.id
+    return serialize_subscription_data(response)
 
 
 def get_checkout_customer_plan(session_id=""):

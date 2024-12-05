@@ -10,8 +10,9 @@ this is user subscription detail view
 {% csrf_token %}
 <button type="submit" class="text-white bg-blue-500 p-2 rounded">Refresh Sub</button>
 </form>
+<br>
 
-
+<a href="{{subscription.get_cancel_url}}">Cancel membership</a>
 
 <h2>Subscription data</h2>
 <p>Name: {{subscription.plan_name}} Plan</p>
@@ -20,5 +21,6 @@ this is user subscription detail view
 <p>Status: {{subscription.status|title}}</p>
 <p>End: {{subscription.current_period_end}}</p>
 <p>Left time: {{subscription.current_period_end|timeuntil}}</p>
+<p>Cancel at period end: {{subscription.cancel_at_period_end}}</p>
 
 {% endblock content%}

@@ -162,16 +162,18 @@ class SubscriptionPrice(models.Model):
         ordering = ["subscription__order", "order", "featured", "-updated"]
 
 
+class SubscriptionStatus(models.TextChoices):
+    ACTIVE = "active", "Active"
+    TRAILING = "trailing", "Trailing"
+    INCOMPLETE = "incomplete", "Incomplete"
+    INCOMPLETE_EXPIRED = "incomplete_expired", "Incomplete Expired"
+    PAST_DUE = "past_due", "Past Due"
+    CANCELED = "canceled", "Canceled"
+    UNPAID = "unpaid", "Unpaid"
+    PAUSED = "paused", "Paused"
+
+
 class UserSubscription(models.Model):
-    class SubscriptionStatus(models.TextChoices):
-        ACTIVE = "active", "Active"
-        TRAILING = "trailing", "Trailing"
-        INCOMPLETE = "incomplete", "Incomplete"
-        INCOMPLETE_EXPIRED = "incomplete_expired", "Incomplete Expired"
-        PAST_DUE = "past_due", "Past Due"
-        CANCELED = "canceled", "Canceled"
-        UNPAID = "unpaid", "Unpaid"
-        PAUSED = "paused", "Paused"
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     subscription = models.ForeignKey(
@@ -189,6 +191,7 @@ class UserSubscription(models.Model):
     current_period_end = models.DateTimeField(
         auto_now=False, auto_now_add=False, blank=True, null=True
     )
+    cancel_at_period_end = models.BooleanField(default=False)
     status = models.CharField(
         null=True,
         blank=True,
@@ -205,12 +208,20 @@ class UserSubscription(models.Model):
         }
 
     @property
+    def is_active_status(self):
+        return self.status in [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRAILING]
+
+    @property
     def plan_name(self):
         return self.subscription.name if self.subscription else None
 
     def get_absolute_url(self):
         """Returns the url for account billing (user subscription) view"""
         return reverse("user_subscription")
+    
+    def get_cancel_url(self):
+        """Returns the url for user subscription cancel view"""
+        return reverse("user_subscription_cancel")
 
     def save(self, *args, **kwargs):
         if self.original_period_start is None and self.current_period_start is not None:

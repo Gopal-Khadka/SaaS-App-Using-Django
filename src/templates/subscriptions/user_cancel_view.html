@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}
+User Subscription View 
+{% endblock title %}
+
+{% block content %}
+this is user subscription cancel view
+
+{% if subscription.is_active_status %}
+    <h2>Are you sure that you want to cancel the {{subscription.plan_name}} plan?</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="text-white bg-blue-500 p-2 rounded">Cancel Sub</button>
+    </form>
+
+<a href="{{subscription.get_absolute_url}}">Go back</a>
+
+{% else %}
+    <h2>You dont have active membership.</h2>
+{% endif %} 
+
+
+{% endblock content%}
