@@ -1,7 +1,35 @@
 import helpers.billing
-
+from django.db.models import Q
 from customers.models import Customer
-from subscriptions.models import UserSubscription, Subscriptions
+from subscriptions.models import UserSubscription, Subscriptions, SubscriptionStatus
+
+
+def refresh_active_users_subscriptions(user_ids=None):
+    # merging two qs (Method 1)
+    # active_qs = qs.filter(status=SubscriptionStatus.ACTIVE)
+    # trialing_qs = qs.filter(status=SubscriptionStatus.TRAILING)
+    # qs = (active_qs | trialing_qs)
+
+    # method 2 using Q
+    active_qs_lookup = Q(status=SubscriptionStatus.ACTIVE) | Q(
+        status=SubscriptionStatus.TRAILING
+    )
+    qs = UserSubscription.objects.filter(active_qs_lookup)
+    if isinstance(user_ids, list):
+        qs = qs.filter(user_id__in=user_ids)
+    elif isinstance(user_ids, int) or isinstance(user_ids, str):
+        qs = qs.filter(user_id__in=[user_ids])
+
+    complete_count = 0
+    qs_count = qs.count()
+    for obj in qs:
+        if obj.stripe_id:
+            sub_data = helpers.billing.get_subscription(obj.stripe_id)
+            for k, v in sub_data.items():
+                setattr(obj, k, v)
+            complete_count += 1
+            obj.save()
+    return complete_count == qs_count
 
 
 def clear_dangling_subs():

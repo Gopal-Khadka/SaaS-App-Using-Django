@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from subscriptions.models import SubscriptionPrice, UserSubscription
+from subscriptions import utils as sub_utils
 
 
 @login_required
@@ -11,13 +12,16 @@ def user_subscription_view(request):
     sub_data = user_sub_obj.serialize()
     if request.method == "POST":
         # refresh subscription
-        if user_sub_obj.stripe_id:
-            sub_data = helpers.billing.get_subscription(user_sub_obj.stripe_id)
-            for k, v in sub_data.items():
-                setattr(user_sub_obj, k, v)
-            user_sub_obj.save()
-            messages.success(request,"Your current plan details has been refreshed")
-
+        finished_refresh = sub_utils.refresh_active_users_subscriptions(
+            user_ids=[request.user.id]
+        )
+        if finished_refresh:
+            messages.success(request, "Your current plan details has been refreshed")
+        else:
+            messages.error(
+                request,
+                message="Something failed while refreshing the subscription. Try Again !!",
+            )
         return redirect(user_sub_obj.get_absolute_url())
 
     return render(
@@ -43,7 +47,7 @@ def user_subscription_cancel_view(request):
             for k, v in sub_data.items():
                 setattr(user_sub_obj, k, v)
             user_sub_obj.save()
-            messages.success(request,"Your current plan has been cancelled")
+            messages.success(request, "Your current plan has been cancelled")
         return redirect(user_sub_obj.get_absolute_url())
 
     return render(
