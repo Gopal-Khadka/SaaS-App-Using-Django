@@ -17,4 +17,8 @@ class Command(BaseCommand):
             subs_utils.clear_dangling_subs()
             print("Cleared all dangling active subscriptions !!!")
         else:
-            print("Sync active subs")
+            print("Refreshing(syncing) active subs...")
+            done = subs_utils.refresh_active_users_subscriptions(
+                active_only=True, verbose=True
+            )
+            print("Done !!!" if done else "Failed :(")

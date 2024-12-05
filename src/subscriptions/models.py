@@ -1,6 +1,7 @@
 from typing import Iterable
 import helpers.billing
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import Group, Permission
 from django.db.models.signals import post_save
 from django.conf import settings
@@ -173,6 +174,26 @@ class SubscriptionStatus(models.TextChoices):
     PAUSED = "paused", "Paused"
 
 
+class UserSubscriptionQuerySet(models.QuerySet):
+    def by_active_trialing(self):
+        active_qs_lookup = Q(status=SubscriptionStatus.ACTIVE) | Q(
+            status=SubscriptionStatus.TRAILING
+        )
+        return self.filter(active_qs_lookup)
+
+    def by_user_ids(self, user_ids=None):
+        if isinstance(user_ids, list):
+            return self.filter(user_id__in=user_ids)
+        elif isinstance(user_ids, int) or isinstance(user_ids, str):
+            return self.filter(user_id__in=[user_ids])
+        return self
+
+
+class UserSubscriptionManager(models.Manager):
+    def get_queryset(self) -> models.QuerySet:
+        return UserSubscriptionQuerySet(self.model, using=self._db)
+
+
 class UserSubscription(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -198,6 +219,8 @@ class UserSubscription(models.Model):
         choices=SubscriptionStatus.choices,
     )
 
+    objects = UserSubscriptionManager()
+
     def serialize(self):
         """Return dict of current period start, end and the status of the subscription."""
         return {
@@ -218,7 +241,7 @@ class UserSubscription(models.Model):
     def get_absolute_url(self):
         """Returns the url for account billing (user subscription) view"""
         return reverse("user_subscription")
-    
+
     def get_cancel_url(self):
         """Returns the url for user subscription cancel view"""
         return reverse("user_subscription_cancel")
