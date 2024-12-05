@@ -1,11 +1,12 @@
-from typing import Iterable
 import helpers.billing
+import datetime
 from django.db import models
 from django.db.models import Q
 from django.contrib.auth.models import Group, Permission
 from django.db.models.signals import post_save
 from django.conf import settings
 from django.urls import reverse
+from django.utils import timezone
 
 User = settings.AUTH_USER_MODEL
 ALLOW_CUSTOM_GROUPS = True
@@ -175,13 +176,108 @@ class SubscriptionStatus(models.TextChoices):
 
 
 class UserSubscriptionQuerySet(models.QuerySet):
+    def by_range(self, days_start=7, days_end=120):
+        """
+        Filters subscriptions based on whether their `current_period_end`
+        falls within a specified range of days from the current date.
+
+        Args:
+            days_start (int): The number of days from the current date to start the range.
+                              Defaults to 7 days.
+            days_end (int): The number of days from the current date to end the range.
+                            Defaults to 120 days.
+
+        Returns:
+            QuerySet: A queryset of subscriptions where the `current_period_end`
+                      is between the start and end of the specified range of days
+                      from the current date.
+        """
+        now = timezone.now()
+        days_start_from_now = now + datetime.timedelta(days=days_start)
+        days_end_from_now = now + datetime.timedelta(days=days_end)
+        range_start = days_start_from_now.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        range_end = days_end_from_now.replace(
+            hour=23, minute=59, second=59, microsecond=59
+        )
+        return self.filter(
+            current_period_end__gte=range_start,
+            current_period_end__lte=range_end,
+        )
+
+    def by_days_left(self, days_left=7):
+        """
+        Filters subscriptions that have a current_period_end date
+        within a specific number of days from the current time.
+
+        Args:
+            days_left (int): The number of days from the current date to filter by.
+                              Defaults to 7 days.
+
+        Returns:
+            QuerySet: A queryset of subscriptions where the current_period_end
+                      is between the start and end of the day after the specified
+                      number of days from now.
+        """
+        now = timezone.now()
+        in_n_days = now + datetime.timedelta(days=days_left)
+        day_start = in_n_days.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = in_n_days.replace(hour=23, minute=59, second=59, microsecond=59)
+        return self.filter(
+            current_period_end__gte=day_start,
+            current_period_end__lte=day_end,
+        )
+
+    def by_days_ago(self, days_ago=3):
+        """
+        Filters subscriptions where the current_period_end date
+        is within a specific number of days in the past.
+
+        Args:
+            days_ago (int): The number of days in the past to filter by.
+                            Defaults to 3 days.
+
+        Returns:
+            QuerySet: A queryset of subscriptions where the current_period_end
+                      is between the start and end of the day a given number
+                      of days ago from the current time.
+        """
+        now = timezone.now()
+        in_n_days = now - datetime.timedelta(days=days_ago)
+        day_start = in_n_days.replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = in_n_days.replace(hour=23, minute=59, second=59, microsecond=59)
+        return self.filter(
+            current_period_end__gte=day_start,
+            current_period_end__lte=day_end,
+        )
+
     def by_active_trialing(self):
+        """
+        Filters subscriptions that are either active or in a trialing status.
+
+        Returns:
+            QuerySet: A queryset of subscriptions that are either in
+                      'ACTIVE' or 'TRIALING' status.
+        """
         active_qs_lookup = Q(status=SubscriptionStatus.ACTIVE) | Q(
             status=SubscriptionStatus.TRAILING
         )
         return self.filter(active_qs_lookup)
 
     def by_user_ids(self, user_ids=None):
+        """
+        Filters subscriptions based on one or more user IDs.
+
+        Args:
+            user_ids (list, int, str, optional): The user ID(s) to filter by.
+                                                  Can be a list of IDs or a single ID.
+
+        Returns:
+            QuerySet: A queryset of subscriptions where the user_id matches one
+                      of the provided IDs. If no valid `user_ids` is provided,
+                      it returns the original queryset.
+        """
         if isinstance(user_ids, list):
             return self.filter(user_id__in=user_ids)
         elif isinstance(user_ids, int) or isinstance(user_ids, str):
