@@ -116,9 +116,8 @@ def checkout_finalized_view(request):
         for k, v in updated_sub_options.items():
             setattr(user_sub_obj, k, v)
         user_sub_obj.save()
-        messages.success(request,"Success ! Thank you for joining us.")
+        messages.success(request, "Success ! Thank you for joining us.")
         return redirect(user_sub_obj.get_absolute_url())
-
 
     return render(
         request,
