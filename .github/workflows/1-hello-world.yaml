@@ -3,9 +3,12 @@ name: 1 - Hello World Github Action
 
 on:
   workflow_dispatch:
-  push: # git push
-    branch:
-      - main
+  # schedule:
+  #   - cron: '30 15 * * *' # run cron job at 3pm 15mins everyday everyweek everymonth
+   
+  # push: # git push
+  #   branch:
+  #     - main
 
 jobs:
   hello_world:
