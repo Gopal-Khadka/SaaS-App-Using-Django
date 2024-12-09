@@ -313,6 +313,7 @@ class UserSubscription(models.Model):
         null=True,
         blank=True,
         choices=SubscriptionStatus.choices,
+        max_length=120
     )
 
     objects = UserSubscriptionManager()
