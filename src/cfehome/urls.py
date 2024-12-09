@@ -4,9 +4,10 @@ from .views import home_page_view, secret_view, users_only_view, staff_only_view
 from user_auth import views as auth_views
 from subscriptions import views as subs_views
 from checkouts import views as checkout_views
+from landing import views as landing_views
 
 urlpatterns = [
-    path("", home_page_view, name="home"),
+    path("", landing_views.landing_page_view, name="home"),
     path("profiles/", include("profiles.urls")),
     path("admin/", admin.site.urls),
     path(
