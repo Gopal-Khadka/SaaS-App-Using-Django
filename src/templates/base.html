@@ -5,7 +5,7 @@
     <title>Saas | {% block title %}{% endblock title %}</title>
     {% include "base/css.html" %}
   </head>
-  <body>
+  <body class="dark">
     {% include "nav/navbar.html" %} 
     {% include "base/messages.html" with messages=messages%}
     {% block content %} {% endblock content %}
